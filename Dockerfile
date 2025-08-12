@@ -1,13 +1,18 @@
 FROM jitesoft/tesseract-ocr:alpine
-# Optional: add more languages (example: Spanish fast)
-# RUN train-lang spa --fast
 
-# Minimal Python + Flask
+# Become root to install packages
+USER root
 RUN apk add --no-cache python3 py3-pip
-WORKDIR /app
-COPY app.py /app/app.py
-RUN pip install flask
 
-# Railway will set PORT; Flask must bind to 0.0.0.0
+# App files
+WORKDIR /app
+COPY requirements.txt .
+RUN pip3 install --no-cache-dir -r requirements.txt
+COPY app.py .
+
+# (Optional) drop back to non-root; the common UID in jitesoft images is 10001
+USER 10001
+
 ENV PORT=8080
-CMD ["sh", "-lc", "python3 app.py --port=$PORT"]  # we'll override with flask run below via start command
+EXPOSE 8080
+CMD ["python3", "app.py"]
